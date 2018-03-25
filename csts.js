@@ -1,6 +1,6 @@
 const fs = require("fs");
 
-function csts(f, dir) {
+function csts(f, dir, customTypes) {
     function getNameStartsWith(lines, starts) {
         const name = lines
             .filter(l => l.startsWith(starts))[0]
@@ -23,6 +23,10 @@ function csts(f, dir) {
             case "bool":
                 return "boolean";
             default:
+                if (customTypes) {
+                    return customTypes[type] || `I${type}`;
+                }
+                
                 return `I${type}`;
         }
     }
@@ -39,7 +43,7 @@ function csts(f, dir) {
     const classNames = getNameStartsWith(lines, "public class");
     const className = Array.isArray(classNames) ? classNames[0] : classNames;
     const iClass = "I" + className;
-    const iSubclass = Array.isArray(classNames) ? "I" + classNames[1] : "";
+    const iSubclass = Array.isArray(classNames) ? typeMap(classNames[1]) : "";
     const iClassFull = Array.isArray(classNames) ? [iClass, iSubclass].join(" extends ") : iClass;
 
     const csprops = lines
