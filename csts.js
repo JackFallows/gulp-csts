@@ -53,6 +53,7 @@ function csts(f, dir, customTypes) {
         let [type, name] = noPublic.split(" ").slice(0, 2);
         if (type.endsWith("?")) {
             type = type.slice(0, type.length - 1);
+            name += "?";
         }
 
         return `${name}: ${typeMap(type)}`;
