@@ -30,7 +30,7 @@ function csts(f, dir, customTypes) {
 
     const [ className, baseClass, typeParams ] = parseName(lines, "public class");
 
-    const iClass = "I" + className;
+    const iClass = typeMap(className);
 
     let iClassFull = iClass;
 
@@ -56,7 +56,26 @@ function csts(f, dir, customTypes) {
             name += "?";
         }
 
-        return `${name}: ${typeMap(type)}`;
+        let typeParam = null;
+        if (type.includes("<")) {
+            typeParam = type.slice(type.indexOf("<") + 1, type.indexOf(">"));
+
+            if (!typeParams.includes(typeParam)) {
+                typeParam = typeMap(typeParam);
+            }
+
+            type = type.slice(0, type.indexOf("<"));
+        }
+
+        // console.log(name, typeMap(type), typeParam)
+        const mappedType = typeMap(type);
+        let field = `${name}: ${mappedType}`;
+        console.log(field, typeParam)
+        if (typeParam && mappedType !== "any") {
+            field += `<${typeParam}>`;
+        }
+
+        return field;
     });
 
     const filename = className.toLowerCase() + ".d.ts";
