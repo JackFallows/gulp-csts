@@ -1,19 +1,7 @@
 const fs = require("fs");
+const parseName = require("./name-parser");
 
 function csts(f, dir, customTypes) {
-    function getNameStartsWith(lines, starts) {
-        const name = lines
-            .filter(l => l.startsWith(starts))[0]
-            .slice(starts.length)
-            .trim();
-
-        if (name.includes(":")) {
-            return name.split(":").map(n => n.trim());
-        }
-
-        return name;
-    }
-
     function typeMap(type) {
         switch (type) {
             case "int":
@@ -34,17 +22,27 @@ function csts(f, dir, customTypes) {
     const file = fs.readFileSync(f, "utf8");
 
     const lines = file
-        .split("\r\n")
+        .split("\n")
         .map(l => l.trim())
         .filter(l => l.length > 0);
 
-    const module = getNameStartsWith(lines, "namespace");
+    const [ module ] = parseName(lines, "namespace");
 
-    const classNames = getNameStartsWith(lines, "public class");
-    const className = Array.isArray(classNames) ? classNames[0] : classNames;
+    const [ className, baseClass, typeParams ] = parseName(lines, "public class");
+
     const iClass = "I" + className;
-    const iSubclass = Array.isArray(classNames) ? typeMap(classNames[1]) : "";
-    const iClassFull = Array.isArray(classNames) ? [iClass, iSubclass].join(" extends ") : iClass;
+
+    let iClassFull = iClass;
+
+    if (typeParams.length > 0) {
+        iClassFull += "<";
+        iClassFull += typeParams.join(", ");
+        iClassFull += ">";
+    }
+
+    if (baseClass) {
+        iClassFull = [iClassFull, baseClass].join(" extends ");
+    }
 
     const csprops = lines
         .filter(l => l.startsWith("public") && !l.startsWith("public class"));
@@ -68,9 +66,11 @@ function csts(f, dir, customTypes) {
 
     fs.writeFileSync(`${dir}/${filename}`,
         `
+// This is a generated file. Any manual changes you make will be overwritten.
+
 declare module ${module} {
     export interface ${iClassFull} {
-        ${iprops.join("\n\t\t")}
+        ${iprops.join(",\n\t\t")}
     }
 }
 `)

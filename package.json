@@ -1,6 +1,6 @@
 {
   "name": "gulp-csts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Gulp plugin for generating Typescript *.d.ts files from C# classes",
   "main": "gulp-csts.js",
   "scripts": {
