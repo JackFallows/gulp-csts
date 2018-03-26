@@ -19,6 +19,16 @@ function csts(f, dir, customTypes) {
         }
     }
 
+    function extractGeneric(typeParams, type) {
+        let typeParam = type.slice(type.indexOf("<") + 1, type.indexOf(">"));
+
+        if (!typeParams.includes(typeParam)) {
+            typeParam = typeMap(typeParam);
+        }
+
+        return typeParam;
+    }
+
     const file = fs.readFileSync(f, "utf8");
 
     const lines = file
@@ -28,7 +38,7 @@ function csts(f, dir, customTypes) {
 
     const [ module ] = parseName(lines, "namespace");
 
-    const [ className, baseClass, typeParams ] = parseName(lines, "public class");
+    let [ className, baseClass, typeParams ] = parseName(lines, "public class");
 
     const iClass = typeMap(className);
 
@@ -41,7 +51,18 @@ function csts(f, dir, customTypes) {
     }
 
     if (baseClass) {
+        let baseTypeParam = null;
+        if (baseClass.includes("<")) {
+            baseTypeParam = extractGeneric(typeParams, baseClass);
+
+            baseClass = baseClass.slice(0, baseClass.indexOf("<"));
+        }
+
         iClassFull = [iClassFull, baseClass].join(" extends ");
+
+        if (baseTypeParam) {
+            iClassFull += `<${baseTypeParam}>`;
+        }
     }
 
     const csprops = lines
@@ -58,11 +79,7 @@ function csts(f, dir, customTypes) {
 
         let typeParam = null;
         if (type.includes("<")) {
-            typeParam = type.slice(type.indexOf("<") + 1, type.indexOf(">"));
-
-            if (!typeParams.includes(typeParam)) {
-                typeParam = typeMap(typeParam);
-            }
+            typeParam = extractGeneric(typeParams, type);
 
             type = type.slice(0, type.indexOf("<"));
         }
