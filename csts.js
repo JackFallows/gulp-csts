@@ -70,7 +70,7 @@ function csts(f, dir, customTypes) {
 
 declare module ${module} {
     export interface ${iClassFull} {
-        ${iprops.join(",\n\t\t")}
+        ${iprops.join(";\n\t\t")};
     }
 }
 `)
