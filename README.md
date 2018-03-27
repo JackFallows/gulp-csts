@@ -3,7 +3,7 @@ This is a Gulp plugin for generating Typescript `*.d.ts` files from C# classes. 
 
 ## Limitations
 
-Currently, each \*.cs file must have only one class inside it. That class must only contain properties. Fields may work, but are as yet untested). Expression-bodied properties may work but, again, are untested.
+Currently, each \*.cs file must have only one class inside it. That class must only contain properties. Fields may work, but are as yet untested. Expression-bodied properties may work but, again, are untested.
 
 ## Installing
 
