@@ -19,14 +19,18 @@ function csts(f, dir, customTypes) {
         }
     }
 
-    function extractGeneric(typeParams, type) {
-        let typeParam = type.slice(type.indexOf("<") + 1, type.indexOf(">"));
+    function extractGenerics(typeParams, type) {
+        let generics = type.slice(type.indexOf("<") + 1, type.indexOf(">"))
+            .split(",")
+            .map(t => t.trim());
 
-        if (!typeParams.includes(typeParam)) {
-            typeParam = typeMap(typeParam);
-        }
+        return generics.map(g => {
+            if (!typeParams.includes(g)) {
+                return typeMap(g);
+            }
 
-        return typeParam;
+            return g;
+        });
     }
 
     const file = fs.readFileSync(f, "utf8");
@@ -51,17 +55,18 @@ function csts(f, dir, customTypes) {
     }
 
     if (baseClass) {
-        let baseTypeParam = null;
+        let baseTypeParams = null;
         if (baseClass.includes("<")) {
-            baseTypeParam = extractGeneric(typeParams, baseClass);
+            baseTypeParams = extractGenerics(typeParams, baseClass);
 
             baseClass = baseClass.slice(0, baseClass.indexOf("<"));
         }
 
-        iClassFull = [iClassFull, typeMap(baseClass)].join(" extends ");
+        baseClass = typeMap(baseClass);
+        iClassFull = [iClassFull, baseClass].join(" extends ");
 
-        if (baseTypeParam) {
-            iClassFull += `<${baseTypeParam}>`;
+        if (baseTypeParams && baseClass !== "any") {
+            iClassFull += `<${baseTypeParams.join(", ")}>`;
         }
     }
 
@@ -71,15 +76,24 @@ function csts(f, dir, customTypes) {
     const iprops = csprops.map(p => {
         const noPublic = p.slice("public ".length);
 
-        let [type, name] = noPublic.split(" ").slice(0, 2);
+        let type, name;
+
+        if (noPublic.includes("<")) {
+            let indexOfSpaceAfterBracket = noPublic.indexOf(" ", noPublic.indexOf(">"));
+            type = noPublic.slice(0, indexOfSpaceAfterBracket).trim();
+            name = noPublic.slice(indexOfSpaceAfterBracket, noPublic.indexOf(" ", indexOfSpaceAfterBracket + 1)).trim();
+        } else {
+            [ type, name ] = noPublic.split(" ").slice(0, 2);
+        }
+        
         if (type.endsWith("?")) {
             type = type.slice(0, type.length - 1);
             name += "?";
         }
 
-        let typeParam = null;
+        let propTypeParams = null;
         if (type.includes("<")) {
-            typeParam = extractGeneric(typeParams, type);
+            propTypeParams = extractGenerics(typeParams, type);
 
             type = type.slice(0, type.indexOf("<"));
         }
@@ -87,9 +101,9 @@ function csts(f, dir, customTypes) {
         // console.log(name, typeMap(type), typeParam)
         const mappedType = typeMap(type);
         let field = `${name}: ${mappedType}`;
-        console.log(field, typeParam)
-        if (typeParam && mappedType !== "any") {
-            field += `<${typeParam}>`;
+        // console.log(field, typeParam)
+        if (propTypeParams && mappedType !== "any") {
+            field += `<${propTypeParams.join(", ")}>`;
         }
 
         return field;
