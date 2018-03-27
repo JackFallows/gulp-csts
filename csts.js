@@ -58,7 +58,7 @@ function csts(f, dir, customTypes) {
             baseClass = baseClass.slice(0, baseClass.indexOf("<"));
         }
 
-        iClassFull = [iClassFull, baseClass].join(" extends ");
+        iClassFull = [iClassFull, typeMap(baseClass)].join(" extends ");
 
         if (baseTypeParam) {
             iClassFull += `<${baseTypeParam}>`;
