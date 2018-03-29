@@ -4,7 +4,7 @@
   "description": "Gulp plugin for generating Typescript *.d.ts files from C# classes",
   "main": "gulp-csts.js",
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha './tests/**/*.tests.js'"
+    "test": "node ./node_modules/mocha/bin/mocha"
   },
   "repository": {
     "type": "git",
