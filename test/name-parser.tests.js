@@ -1,8 +1,11 @@
 const assert = require("assert");
-const parseNameLine = require("../name-parser");
+
+const typeMap = require("../type-map")([]);
+const extractGenerics = require("../extract-generics")(typeMap);
+const { parseNamespace, parseClass } = require("../name-parser")(extractGenerics);
 
 describe("parseNameLine", function () {
-    describe("namespaces", function () {
+    describe("parseNamespace", function () {
         it("picks out namespace", function () {
             const lines = [
                 "namespace MyNamespace",
@@ -10,7 +13,7 @@ describe("parseNameLine", function () {
                 "}"
             ];
 
-            const [name] = parseNameLine(lines, "namespace");
+            const { name } = parseNamespace(lines);
 
             assert.equal(name, "MyNamespace");
         });
@@ -24,13 +27,13 @@ describe("parseNameLine", function () {
                 "}"
             ];
 
-            const [name] = parseNameLine(lines, "namespace");
+            const { name } = parseNamespace(lines);
 
             assert.equal(name, "MyNamespace");
         });
     });
 
-    describe("classes", function () {
+    describe("parseClass", function () {
         it("picks out a standard class name", function () {
             const lines = [
                 "namespace MyNamespace",
@@ -41,7 +44,7 @@ describe("parseNameLine", function () {
                 "}"
             ];
 
-            const [name] = parseNameLine(lines, "public class");
+            const { result: { name } } = parseClass(lines);
 
             assert.equal(name, "MyClass");
         });
@@ -56,7 +59,7 @@ describe("parseNameLine", function () {
                 "}"
             ];
 
-            const [name, base] = parseNameLine(lines, "public class");
+            const { result: { name, baseClass: base } } = parseClass(lines);
 
             assert.equal(name, "MyClass");
             assert.equal(base, "BaseClass");
@@ -101,7 +104,7 @@ describe("parseNameLine", function () {
                     "}"
                 ];
 
-                const [name, base, types] = parseNameLine(lines, "public class");
+                const { result: { name, baseClass: base, typeParams: types } } = parseClass(lines);
 
                 assert.equal(name, "MyClass");
                 assert.equal(base, null);

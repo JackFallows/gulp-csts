@@ -24,7 +24,7 @@ gulp.src("./path/to/csharp/classes/*.cs")
   .pipe(csts({
     outputDir: "./typings",
     types: {
-      "MyUntypedClass": any,
+      "MyUntypedClass": "any",
       "MyClassTypedElsewhere": "IMyClassTypedElsewhere"
     }
   });

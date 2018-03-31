@@ -1,52 +1,17 @@
 const fs = require("fs");
-const parseName = require("./name-parser");
 
-function csts(f, dir, customTypes) {
-    function typeMap(type) {
-        switch (type) {
-            case "int":
-                return "number";
-            case "string":
-                return "string";
-            case "bool":
-                return "boolean";
-            default:
-                if (customTypes) {
-                    return customTypes[type] || `I${type}`;
-                }
-                
-                return `I${type}`;
-        }
-    }
+const makeCsts = (loadFile, createFile) => (customTypes) => {
+    const typeMap = require("./type-map")(customTypes);
+    const extractGenerics = require("./extract-generics")(typeMap);
+    const { parseNamespace, parseClass } = require("./name-parser")(extractGenerics);
+    
+    const lines = loadFile();
 
-    function extractGenerics(typeParams, type) {
-        let generics = type.slice(type.indexOf("<") + 1, type.indexOf(">"))
-            .split(",")
-            .map(t => t.trim());
+    const { name: module } = parseNamespace(lines);
 
-        return generics.map(g => {
-            if (!typeParams.includes(g)) {
-                return typeMap(g);
-            }
+    let { result: { name: className, baseClass, typeParams }, parseProperty } = parseClass(lines);
 
-            return g;
-        });
-    }
-
-    const file = fs.readFileSync(f, "utf8");
-
-    const lines = file
-        .split("\n")
-        .map(l => l.trim())
-        .filter(l => l.length > 0);
-
-    const [ module ] = parseName(lines, "namespace");
-
-    let [ className, baseClass, typeParams ] = parseName(lines, "public class");
-
-    const iClass = typeMap(className);
-
-    let iClassFull = iClass;
+    let iClassFull = typeMap(className);
 
     if (typeParams.length > 0) {
         iClassFull += "<";
@@ -98,10 +63,8 @@ function csts(f, dir, customTypes) {
             type = type.slice(0, type.indexOf("<"));
         }
 
-        // console.log(name, typeMap(type), typeParam)
         const mappedType = typeMap(type);
         let field = `${name}: ${mappedType}`;
-        // console.log(field, typeParam)
         if (propTypeParams && mappedType !== "any") {
             field += `<${propTypeParams.join(", ")}>`;
         }
@@ -109,22 +72,19 @@ function csts(f, dir, customTypes) {
         return field;
     });
 
-    const filename = className.toLowerCase() + ".d.ts";
-
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-    }
-
-    fs.writeFileSync(`${dir}/${filename}`,
-        `
+    const contents = `
 // This is a generated file. Any manual changes you make will be overwritten.
 
 declare module ${module} {
     export interface ${iClassFull} {
-        ${iprops.join(";\n\t\t")};
+        ${iprops.join(";\n\t\t") + (iprops.length > 0 ? ";" : "")}
     }
 }
-`)
-}
+`;
 
-module.exports = csts;
+    createFile(className, contents);
+    
+    return contents;
+};
+
+module.exports = makeCsts;
